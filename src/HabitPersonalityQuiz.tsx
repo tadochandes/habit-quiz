@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Heart, AlertCircle, Target, Sparkles, Calendar } from 'lucide-react';
 
 type AnswerType = 'perfectionist' | 'approval' | 'anxiety' | 'planning';
@@ -164,10 +164,24 @@ const resultTypes: Record<AnswerType, Result> = {
   },
 };
 
+// ✅ URLから結果を判定するための関数
+const isValidResult = (v: string | null, dict: Record<string, unknown>): v is keyof typeof dict =>
+  !!v && Object.prototype.hasOwnProperty.call(dict, v);
+
 const HabitPersonalityQuiz: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<AnswerType[]>([]);
   const [result, setResult] = useState<AnswerType | null>(null);
+
+  // ✅ URLに ?result=xxxx がある場合、最初から結果画面にする
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const r = params.get('result');
+    if (isValidResult(r, resultTypes)) {
+      setResult(r);
+      setCurrentQuestion(questions.length - 1);
+    }
+  }, []);
 
   const handleAnswer = (type: AnswerType) => {
     const newAnswers = [...answers, type];
@@ -176,7 +190,7 @@ const HabitPersonalityQuiz: React.FC = () => {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion((q) => q + 1);
     } else {
-      // 集計
+      // 集計とURL更新
       const counts = newAnswers.reduce<Record<AnswerType, number>>((acc, t) => {
         acc[t] = (acc[t] ?? 0) + 1;
         return acc;
@@ -186,6 +200,11 @@ const HabitPersonalityQuiz: React.FC = () => {
         counts[a] >= counts[b] ? a : b
       );
       setResult(maxType);
+
+      // ✅ URLに結果を追加
+      const params = new URLSearchParams(window.location.search);
+      params.set('result', maxType);
+      window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
     }
   };
 
@@ -193,6 +212,12 @@ const HabitPersonalityQuiz: React.FC = () => {
     setCurrentQuestion(0);
     setAnswers([]);
     setResult(null);
+
+    // ✅ URLから ?result を削除
+    const params = new URLSearchParams(window.location.search);
+    params.delete('result');
+    const query = params.toString();
+    window.history.replaceState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
   };
 
   if (result) {
@@ -212,6 +237,7 @@ const HabitPersonalityQuiz: React.FC = () => {
               <p className="text-lg text-gray-600 italic">{data.description}</p>
             </div>
 
+            {/* 結果内容 */}
             <div className="space-y-6 mt-8">
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <h3 className="font-bold text-gray-800 mb-3 flex items-center">
@@ -225,9 +251,7 @@ const HabitPersonalityQuiz: React.FC = () => {
                 <h3 className="font-bold text-gray-800 mb-3">⚠️ やってはいけない勉強法</h3>
                 <ul className="space-y-2">
                   {data.ngStudy.map((item, i) => (
-                    <li key={i} className="text-gray-700">
-                      {item}
-                    </li>
+                    <li key={i} className="text-gray-700">{item}</li>
                   ))}
                 </ul>
               </div>
@@ -236,9 +260,7 @@ const HabitPersonalityQuiz: React.FC = () => {
                 <h3 className="font-bold text-gray-800 mb-3">✨ あなたが続けられる勉強法</h3>
                 <ul className="space-y-2">
                   {data.okStudy.map((item, i) => (
-                    <li key={i} className="text-gray-700 font-medium">
-                      {item}
-                    </li>
+                    <li key={i} className="text-gray-700 font-medium">{item}</li>
                   ))}
                 </ul>
               </div>
@@ -252,56 +274,38 @@ const HabitPersonalityQuiz: React.FC = () => {
               </div>
             </div>
 
+            {/* ✅ シェア＆再診断ボタン */}
             <div className="mt-8 text-center space-y-4">
-  <button
-    onClick={resetQuiz}
-    className="bg-white text-gray-700 px-8 py-3 rounded-full font-bold hover:bg-gray-50 transition shadow-md"
-  >
-    もう一度診断する
-  </button>
+              <button
+                onClick={async () => {
+                  const url = window.location.href;
+                  const text = `三日坊主脱出診断の結果「${data.title}」は…👇`;
+                  if (navigator.share) {
+                    await navigator.share({ title: '三日坊主脱出診断', text, url });
+                  } else {
+                    await navigator.clipboard.writeText(`${text}\n${url}`);
+                    alert('リンクをコピーしました！');
+                  }
+                }}
+                className="bg-black text-white px-6 py-3 rounded-full font-bold hover:opacity-90 transition"
+              >
+                結果をシェア
+              </button>
 
-  {/* 👇 ここに追加 */}
-  <button
-    onClick={async () => {
-      const url = window.location.href;
-      const text = '三日坊主脱出診断の結果は…👇';
-      if (navigator.share) {
-        await navigator.share({ title: '三日坊主脱出診断', text, url });
-      } else {
-        await navigator.clipboard.writeText(`${text}\n${url}`);
-        alert('リンクをコピーしました！');
-      }
-    }}
-    className="bg-black text-white px-6 py-3 rounded-full font-bold hover:opacity-90 transition"
-  >
-    結果をシェア
-  </button>
-
-  <p className="text-sm text-gray-600 mt-4">
-    💡 この診断結果をスクショして、勉強垢でシェアしてみよう!
-    <br />
-    あなたに合った習慣化のコツが見つかります。
-  </p>
-</div>
-
-          </div>
-
-          <div className="mt-8 text-center bg-white rounded-2xl p-6 shadow-lg">
-            <h3 className="font-bold text-xl text-gray-800 mb-3">🎁 公式LINE登録者限定特典</h3>
-            <p className="text-gray-700 mb-4">
-              この診断はほんの入口。
-              <br />
-              あなたに合った習慣化プランを一緒に作りませんか?
-            </p>
-            <button className="bg-gradient-to-r from-orange-400 to-pink-400 text-white px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl transition">
-              公式LINEで無料相談してみる
-            </button>
+              <button
+                onClick={resetQuiz}
+                className="bg-white text-gray-700 px-8 py-3 rounded-full font-bold hover:bg-gray-50 transition shadow-md"
+              >
+                もう一度診断する
+              </button>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
+  // 質問画面
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-pink-50 p-4 sm:p-8">
       <div className="max-w-2xl mx-auto">
@@ -334,8 +338,6 @@ const HabitPersonalityQuiz: React.FC = () => {
               >
                 {option.text}
               </button>
-
-              
             ))}
           </div>
         </div>
