@@ -259,6 +259,21 @@ const HabitPersonalityQuiz: React.FC = () => {
               >
                 もう一度診断する
               </button>
+              <button
+    onClick={async () => {
+      const url = window.location.href;
+      const text = '三日坊主脱出診断の結果は…👇';
+      if (navigator.share) {
+        await navigator.share({ title: '三日坊主脱出診断', text, url });
+      } else {
+        await navigator.clipboard.writeText(`${text}\n${url}`);
+        alert('リンクをコピーしました！');
+      }
+    }}
+    className="bg-black text-white px-6 py-3 rounded-full font-bold hover:opacity-90 transition"
+  >
+    結果をシェア
+  </button>
               <p className="text-sm text-gray-600 mt-4">
                 💡 この診断結果をスクショして、勉強垢でシェアしてみよう!
                 <br />
@@ -315,6 +330,8 @@ const HabitPersonalityQuiz: React.FC = () => {
               >
                 {option.text}
               </button>
+
+              
             ))}
           </div>
         </div>
@@ -328,19 +345,3 @@ const HabitPersonalityQuiz: React.FC = () => {
 };
 
 export default HabitPersonalityQuiz;
-
-<button
-  onClick={async () => {
-    const url = window.location.href;
-    const text = '三日坊主脱出診断の結果は…👇';
-    if (navigator.share) {
-      await navigator.share({ title: '三日坊主脱出診断', text, url });
-    } else {
-      await navigator.clipboard.writeText(`${text}\n${url}`);
-      alert('リンクをコピーしました！');
-    }
-  }}
-  className="bg-black text-white px-6 py-3 rounded-full font-bold hover:opacity-90 transition"
->
-  結果をシェア
-</button>
