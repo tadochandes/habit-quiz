@@ -25,6 +25,16 @@ const iconMap = {
   sparkles: Sparkles,
 } as const;
 
+// ✅ URL ?result=xxx が AnswerType のいずれかか判定する関数
+const isValidResult = (v: string | null): v is AnswerType => {
+  return (
+    v === 'perfectionist' ||
+    v === 'approval' ||
+    v === 'anxiety' ||
+    v === 'planning'
+  );
+};
+
 const questions: Question[] = [
   {
     q: '勉強を始める前、一番気になることは?',
@@ -117,16 +127,8 @@ const resultTypes: Record<AnswerType, Result> = {
     description: '「誰かに見てもらいたい」が原動力のあなた',
     reason:
       '一人だとモチベーションが続かず、褒められないと頑張れない。SNSの反応に一喜一憂しがち。',
-    ngStudy: [
-      '❌ 完全に一人で黙々と勉強',
-      '❌ 成果が見えにくい学習法',
-      '❌ 誰にも報告しない秘密の勉強',
-    ],
-    okStudy: [
-      '✅ 勉強記録をSNSやLINEでシェア',
-      '✅ 週1回の報告タイムを作る',
-      '✅ 「見守られている」環境を作る',
-    ],
+    ngStudy: ['❌ 完全に一人で黙々と勉強', '❌ 成果が見えにくい学習法', '❌ 誰にも報告しない秘密の勉強'],
+    okStudy: ['✅ 勉強記録をSNSやLINEでシェア', '✅ 週1回の報告タイムを作る', '✅ 「見守られている」環境を作る'],
     advice:
       'あなたの頑張りを見てくれる人を確保しましょう。コーチングはあなたのための応援団です!',
     color: 'bg-pink-50 border-pink-200',
@@ -138,11 +140,7 @@ const resultTypes: Record<AnswerType, Result> = {
     reason:
       '少しの失敗で自分を責め、「やっぱりダメだ」と諦めてしまう。自己否定ループで挫折。',
     ngStudy: ['❌ 高すぎる目標設定', '❌ 「できなかったこと」を記録する', '❌ 他人と比較する'],
-    okStudy: [
-      '✅ 超小さな目標からスタート(5分読書など)',
-      '✅ 「できたこと」だけを記録',
-      '✅ 過去の自分とだけ比較する',
-    ],
+    okStudy: ['✅ 超小さな目標からスタート', '✅ 「できたこと」だけを記録', '✅ 過去の自分とだけ比較する'],
     advice:
       '「できない自分」ではなく、「少しずつできる自分」に注目を。小さな成功を積み重ねましょう!',
     color: 'bg-blue-50 border-blue-200',
@@ -153,20 +151,12 @@ const resultTypes: Record<AnswerType, Result> = {
     description: '「計画は完璧、でも実行できない」あなた',
     reason:
       '計画を立てるのは得意だけど、予定が崩れると混乱。リカバリー方法が分からず挫折。',
-    ngStudy: [
-      '❌ 緻密すぎる長期計画',
-      '❌ 予備日のない固定スケジュール',
-      '❌ 計画通りにいかないとパニック',
-    ],
+    ngStudy: ['❌ 緻密すぎる長期計画', '❌ 予備日のない固定スケジュール', '❌ 計画通りにいかないとパニック'],
     okStudy: ['✅ 週単位のゆるい計画', '✅ 必ず「予備日」を設ける', '✅ 計画の修正を前提にする'],
     advice: '計画は「目安」であって「絶対」ではありません。柔軟に調整しながら進みましょう!',
     color: 'bg-green-50 border-green-200',
   },
 };
-
-// ✅ URLから結果を判定するための関数（型を明確にしたバージョン）
-const isAnswerType = (v: string | null): v is AnswerType =>
-  v === 'perfectionist' || v === 'approval' || v === 'anxiety' || v === 'planning';
 
 const HabitPersonalityQuiz: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -174,13 +164,13 @@ const HabitPersonalityQuiz: React.FC = () => {
   const [result, setResult] = useState<AnswerType | null>(null);
 
   useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const r = params.get('result');
-  if (isValidResult(r, resultTypes)) {
-    setResult(r as AnswerType); // ★ここを追加
-    setCurrentQuestion(questions.length - 1);
-  }
-}, []);
+    const params = new URLSearchParams(window.location.search);
+    const r = params.get('result');
+    if (isValidResult(r)) {
+      setResult(r);
+      setCurrentQuestion(questions.length - 1);
+    }
+  }, []);
 
   const handleAnswer = (type: AnswerType) => {
     const newAnswers = [...answers, type];
@@ -189,21 +179,20 @@ const HabitPersonalityQuiz: React.FC = () => {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion((q) => q + 1);
     } else {
-      // 集計とURL更新
-      const counts = newAnswers.reduce<Record<AnswerType, number>>((acc, t) => {
-        acc[t] = (acc[t] ?? 0) + 1;
-        return acc;
-      }, { perfectionist: 0, approval: 0, anxiety: 0, planning: 0 });
+      const counts = newAnswers.reduce<Record<AnswerType, number>>(
+        (acc, t) => {
+          acc[t] = (acc[t] ?? 0) + 1;
+          return acc;
+        },
+        { perfectionist: 0, approval: 0, anxiety: 0, planning: 0 }
+      );
 
       const maxType = (Object.keys(counts) as AnswerType[]).reduce((a, b) =>
         counts[a] >= counts[b] ? a : b
       );
       setResult(maxType);
-
-      // ✅ URLに結果を追加
-      const params = new URLSearchParams(window.location.search);
-      params.set('result', maxType);
-      window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+      const newUrl = `${window.location.origin}?result=${maxType}`;
+      window.history.replaceState(null, '', newUrl);
     }
   };
 
@@ -211,12 +200,7 @@ const HabitPersonalityQuiz: React.FC = () => {
     setCurrentQuestion(0);
     setAnswers([]);
     setResult(null);
-
-    // ✅ URLから ?result を削除
-    const params = new URLSearchParams(window.location.search);
-    params.delete('result');
-    const query = params.toString();
-    window.history.replaceState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
+    window.history.replaceState(null, '', window.location.origin);
   };
 
   if (result) {
@@ -228,15 +212,12 @@ const HabitPersonalityQuiz: React.FC = () => {
         <div className="max-w-2xl mx-auto">
           <div className={`${data.color} border-2 rounded-3xl p-8 shadow-lg`}>
             <div className="text-center mb-6">
-              <div className="flex justify-center mb-4">
-                <Icon className="w-16 h-16" />
-              </div>
+              <Icon className="w-16 h-16 mx-auto mb-4" />
               <h2 className="text-3xl font-bold text-gray-800 mb-2">あなたは…</h2>
               <div className="text-4xl font-bold text-gray-900 mb-4">{data.title}</div>
               <p className="text-lg text-gray-600 italic">{data.description}</p>
             </div>
 
-            {/* 結果内容 */}
             <div className="space-y-6 mt-8">
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <h3 className="font-bold text-gray-800 mb-3 flex items-center">
@@ -250,7 +231,7 @@ const HabitPersonalityQuiz: React.FC = () => {
                 <h3 className="font-bold text-gray-800 mb-3">⚠️ やってはいけない勉強法</h3>
                 <ul className="space-y-2">
                   {data.ngStudy.map((item, i) => (
-                    <li key={i} className="text-gray-700">{item}</li>
+                    <li key={i}>{item}</li>
                   ))}
                 </ul>
               </div>
@@ -259,7 +240,7 @@ const HabitPersonalityQuiz: React.FC = () => {
                 <h3 className="font-bold text-gray-800 mb-3">✨ あなたが続けられる勉強法</h3>
                 <ul className="space-y-2">
                   {data.okStudy.map((item, i) => (
-                    <li key={i} className="text-gray-700 font-medium">{item}</li>
+                    <li key={i}>{item}</li>
                   ))}
                 </ul>
               </div>
@@ -269,16 +250,22 @@ const HabitPersonalityQuiz: React.FC = () => {
                   <Sparkles className="w-5 h-5 mr-2 text-orange-500" />
                   コーチからのアドバイス
                 </h3>
-                <p className="text-gray-800 leading-relaxed font-medium">{data.advice}</p>
+                <p>{data.advice}</p>
               </div>
             </div>
 
-            {/* ✅ シェア＆再診断ボタン */}
             <div className="mt-8 text-center space-y-4">
+              <button
+                onClick={resetQuiz}
+                className="bg-white text-gray-700 px-8 py-3 rounded-full font-bold hover:bg-gray-50 transition shadow-md"
+              >
+                もう一度診断する
+              </button>
+
               <button
                 onClick={async () => {
                   const url = window.location.href;
-                  const text = `三日坊主脱出診断の結果「${data.title}」は…👇`;
+                  const text = '三日坊主脱出診断の結果は…👇';
                   if (navigator.share) {
                     await navigator.share({ title: '三日坊主脱出診断', text, url });
                   } else {
@@ -289,13 +276,6 @@ const HabitPersonalityQuiz: React.FC = () => {
                 className="bg-black text-white px-6 py-3 rounded-full font-bold hover:opacity-90 transition"
               >
                 結果をシェア
-              </button>
-
-              <button
-                onClick={resetQuiz}
-                className="bg-white text-gray-700 px-8 py-3 rounded-full font-bold hover:bg-gray-50 transition shadow-md"
-              >
-                もう一度診断する
               </button>
             </div>
           </div>
