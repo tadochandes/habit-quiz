@@ -164,24 +164,23 @@ const resultTypes: Record<AnswerType, Result> = {
   },
 };
 
-// ✅ URLから結果を判定するための関数
-const isValidResult = (v: string | null, dict: Record<string, unknown>): v is keyof typeof dict =>
-  !!v && Object.prototype.hasOwnProperty.call(dict, v);
+// ✅ URLから結果を判定するための関数（型を明確にしたバージョン）
+const isAnswerType = (v: string | null): v is AnswerType =>
+  v === 'perfectionist' || v === 'approval' || v === 'anxiety' || v === 'planning';
 
 const HabitPersonalityQuiz: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<AnswerType[]>([]);
   const [result, setResult] = useState<AnswerType | null>(null);
 
-  // ✅ URLに ?result=xxxx がある場合、最初から結果画面にする
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const r = params.get('result');
-    if (isValidResult(r, resultTypes)) {
-      setResult(r);
-      setCurrentQuestion(questions.length - 1);
-    }
-  }, []);
+  const params = new URLSearchParams(window.location.search);
+  const r = params.get('result');
+  if (isValidResult(r, resultTypes)) {
+    setResult(r as AnswerType); // ★ここを追加
+    setCurrentQuestion(questions.length - 1);
+  }
+}, []);
 
   const handleAnswer = (type: AnswerType) => {
     const newAnswers = [...answers, type];
