@@ -253,13 +253,15 @@ const HabitPersonalityQuiz: React.FC = () => {
             </div>
 
             <div className="mt-8 text-center space-y-4">
-              <button
-                onClick={resetQuiz}
-                className="bg-white text-gray-700 px-8 py-3 rounded-full font-bold hover:bg-gray-50 transition shadow-md"
-              >
-                もう一度診断する
-              </button>
-              <button
+  <button
+    onClick={resetQuiz}
+    className="bg-white text-gray-700 px-8 py-3 rounded-full font-bold hover:bg-gray-50 transition shadow-md"
+  >
+    もう一度診断する
+  </button>
+
+  {/* 👇 ここに追加 */}
+  <button
     onClick={async () => {
       const url = window.location.href;
       const text = '三日坊主脱出診断の結果は…👇';
@@ -274,12 +276,14 @@ const HabitPersonalityQuiz: React.FC = () => {
   >
     結果をシェア
   </button>
-              <p className="text-sm text-gray-600 mt-4">
-                💡 この診断結果をスクショして、勉強垢でシェアしてみよう!
-                <br />
-                あなたに合った習慣化のコツが見つかります。
-              </p>
-            </div>
+
+  <p className="text-sm text-gray-600 mt-4">
+    💡 この診断結果をスクショして、勉強垢でシェアしてみよう!
+    <br />
+    あなたに合った習慣化のコツが見つかります。
+  </p>
+</div>
+
           </div>
 
           <div className="mt-8 text-center bg-white rounded-2xl p-6 shadow-lg">
