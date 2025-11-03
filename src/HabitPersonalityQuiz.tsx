@@ -328,3 +328,19 @@ const HabitPersonalityQuiz: React.FC = () => {
 };
 
 export default HabitPersonalityQuiz;
+
+<button
+  onClick={async () => {
+    const url = window.location.href;
+    const text = '三日坊主脱出診断の結果は…👇';
+    if (navigator.share) {
+      await navigator.share({ title: '三日坊主脱出診断', text, url });
+    } else {
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      alert('リンクをコピーしました！');
+    }
+  }}
+  className="bg-black text-white px-6 py-3 rounded-full font-bold hover:opacity-90 transition"
+>
+  結果をシェア
+</button>
