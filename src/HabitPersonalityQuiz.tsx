@@ -1,7 +1,5 @@
-// src/HabitPersonalityQuiz.tsx
-import React, { useState } from "react";
-import { Heart, AlertCircle, Target, Sparkles, Calendar } from "lucide-react";
-
+// 先頭の import をこれに（型も一緒に import）
+import React, { useState, type ReactNode } from "react";
 // ===== 型定義 =====
 type AnswerType = "perfectionist" | "approval" | "anxiety" | "planning";
 
@@ -10,7 +8,7 @@ type Question = { q: string; options: Option[] };
 
 type ResultInfo = {
   title: string;
-  icon: JSX.Element;
+  icon: ReactNode;         // ← JSX.Element から ReactNode へ
   description: string;
   reason: string;
   ngStudy: string[];
